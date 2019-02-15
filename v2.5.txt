@@ -191,10 +191,17 @@ void giroDer(){
   caderaFrente();
   delay(50);
   pwm.setPWM(PIEDER, 0, 350); // SACAMOS PIE DERECHO
-  delay(100);
-  pwm.setPWM(TOBILLOIZQ, 0, 415); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
-  delay(100);
-  
+  delay(200);
+  pwm.setPWM(TOBILLOIZQ, 0, 375); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(200);
+  pwm.setPWM(PIEDER, 0, 260); // ESTABILIZAMOS EL PIE DERECHO
+  delay(200);
+  pwm.setPWM(PIEIZQ, 0, 190); // SACAMOS EL PIE IZQUIERDO
+  delay(200);
+  pwm.setPWM(TOBILLOIZQ, 0, 475); // ESTABILIZAMOS TOBILLO IZQUIERDO
+  delay(200);
+  pwm.setPWM(PIEIZQ, 0, 380); // ESTABILIAMOS EL PIE IZQUIERDO
+  delay(200);
 }
 
 void bloqueBasicoMov(){
@@ -241,9 +248,11 @@ void erguir(){
 int tiempo = 0;
 
 void loop(){
-  if(tiempo < 2) bloqueBasicoMov();
+  if(tiempo < 3) bloqueBasicoMov();
   else {
     reincorporacionTrasMov();
+    delay(500);
+    giroDer();
     delay(20000);
   }
   tiempo = tiempo + 1;
