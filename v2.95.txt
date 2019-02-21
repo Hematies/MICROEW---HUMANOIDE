@@ -1,0 +1,607 @@
+
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
+
+int randNum;
+
+// usa la direcci?n por defecto 0x40
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+
+//declaramos el numero del servo shield en el que est? cada servo
+
+#define HOMBROIZQ 5
+#define PIEIZQ 4
+#define TOBILLOIZQ 3
+#define RODILLAIZQ 2
+#define PELVISIZQ 1
+
+#define CADERA 15
+
+#define HOMBRODER 8
+#define PIEDER 12
+#define TOBILLODER 11
+#define RODILLADER 10
+#define PELVISDER 9
+
+//declaramos las distancias
+#define CERCA 13
+#define LEJOS 70
+
+// Ultrasonido
+
+int inputUltrasonido = A2; // Entra en arduino (echo)
+int outputUltrasonido = A3; // Sale de arduino (trig)
+int distanciaUltrasonido = 0; // Recoge la distancia detectada por el ultrasonido
+
+/*
+const int EchoPin = 5;
+const int TriggerPin = 6;
+const int LedPin = 13;
+*/
+
+void setup() {
+  
+  // Ultrasonido
+
+  pinMode(inputUltrasonido, INPUT);
+  pinMode(outputUltrasonido  , OUTPUT);
+
+  randomSeed(analogRead(0));
+  
+  pwm.begin();
+  
+  pwm.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
+
+  delay(10);
+  /*
+  pinMode(LedPin, OUTPUT);
+  pinMode(TriggerPin, OUTPUT);
+  pinMode(EchoPin, INPUT);
+  */
+
+  delay(1000);
+  //modoTanque();
+  //delay(500);
+  levantar();
+  delay(3000);
+  //modoTanque();
+  //delay(1000);
+}
+
+// FUNCIONES MOTORAS
+
+void brazosAvance(){
+  pwm.setPWM(HOMBROIZQ, 0, 400);
+  pwm.setPWM(HOMBRODER, 0, 180);
+}
+
+void caderaFrente(){
+  pwm.setPWM(CADERA, 0, 380);
+  brazosAvance(); 
+}
+
+void caderaLigeraDer(){
+  pwm.setPWM(CADERA, 0, 310);
+  pwm.setPWM(HOMBROIZQ, 0, 300); // SACAMOS BRAZO IZQUIERDO
+  pwm.setPWM(HOMBRODER, 0, 160); // METEMOS BRAZO DERECHO
+}
+
+void caderaLigeraIzq(){                 //\\ NECESITA CORRECCI?N\\//
+  pwm.setPWM(CADERA, 0, 450);
+  pwm.setPWM(HOMBROIZQ, 0, 450 ); // METEMOS BRAZO IZQUIERDO
+  pwm.setPWM(HOMBRODER, 0, 340); // SACAMOS BRAZO DERECHO
+}
+
+void cojeraIzq(){
+  pwm.setPWM(RODILLADER, 0, 140); // ESTIRAMOS LA RODILLA DERECHA
+  delay(25);
+  pwm.setPWM(PELVISDER, 0, 325); // ESTIRAMOS LA PELVIS DERECHA
+  delay(25);
+  pwm.setPWM(PIEDER, 0, 120); // METEMOS PIE DERECHO
+  delay(25);
+  pwm.setPWM(PIEIZQ, 0, 365); // SACAMOS PIE IZQUIERDO
+  delay(25);
+}
+
+void cojeraIzqTrasPaso(){
+  pwm.setPWM(RODILLADER, 0, 140); // ESTIRAMOS LA RODILLA DERECHA
+  delay(25);
+  //pwm.setPWM(RODILLAIZQ, 0, 140); // CONTRAEMOS LA PELVIS IZQUIERDA
+  delay(25);
+  pwm.setPWM(PIEDER, 0, 120); // METEMOS PIE DERECHO
+  delay(25);
+  pwm.setPWM(PIEIZQ, 0, 365); // SACAMOS PIE IZQUIERDO
+  delay(25);
+}
+
+void cojeraDer(){
+  // ESTO VA DESPU?S DE PASITO DERECHO
+  delay(100);
+  pwm.setPWM(RODILLAIZQ, 0, 440); // ESTIRAMOS LA RODILLA IZQUIERDA
+  delay(25);
+  pwm.setPWM(TOBILLODER, 0, 320); // GIRAMOS TOBILLO DERECHO HORARIO
+  delay(25);
+  pwm.setPWM(PIEIZQ, 0, 570); // METEMOS PIE IZQUIERD0
+  delay(100);
+  pwm.setPWM(TOBILLOIZQ, 0, 475); // ESTABILIZAMOS TOBILLO DERECHO
+  delay(25);
+  pwm.setPWM(PIEDER, 0, 280); // "ESTABILIZAMOS" PIE DERECHO
+  delay(25);
+  pwm.setPWM(PELVISIZQ, 0, 220); // ESTIRAMOS LA PELVIS IZQUIERDA
+  delay(25);
+  pwm.setPWM(PELVISDER, 0, 380); // CONTRAEMOS LA PELVIS DERECHA
+  delay(25);
+  pwm.setPWM(RODILLADER, 0, 175); // CONTRAEMOS LA RODILLA DERECHA
+}
+
+void pasitoDer(){
+  // PASITO: ESTADO ESTABLE -> ESTADO PASO HACIA DELANTE
+  // PASO: ESTADO PASO HACIA DELANTE -> ESTADO PASO HACIA DELANTE
+  delay(100);
+  caderaLigeraDer();
+  pwm.setPWM(PELVISDER, 0, 395); // CONTRAEMOS PELVIS DERECHA
+  delay(25);
+  pwm.setPWM(RODILLADER, 0, 195); // CONTRAEMOS RODILLA DERECHA
+  delay(25);
+  pwm.setPWM(PELVISIZQ, 0, 185); // ?ESTIRAMOS? PELVIS IZQUIERDA
+  delay(25);
+  pwm.setPWM(TOBILLOIZQ, 0, 550); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(25);
+  pwm.setPWM(TOBILLODER, 0, 395); // GIRAMOS TOBILLO DERECHO HORARIO
+  delay(100);
+  pwm.setPWM(PIEDER, 0, 255); // ESTABILIZAMOS PIE DERECHO
+}
+
+void pasoDer(){
+  // PASITO: ESTADO ESTABLE -> ESTADO PASO HACIA DELANTE
+  // PASO: ESTADO PASO HACIA DELANTE -> ESTADO PASO HACIA DELANTE
+  delay(100);
+  caderaLigeraDer();
+  pwm.setPWM(PELVISDER, 0, 395); // CONTRAEMOS PELVIS DERECHA
+  delay(25);
+  pwm.setPWM(RODILLADER, 0, 195); // CONTRAEMOS RODILLA DERECHA
+  delay(25);
+  pwm.setPWM(PELVISIZQ, 0, 185); // ?ESTIRAMOS? PELVIS IZQUIERDA
+  delay(25);
+  pwm.setPWM(TOBILLOIZQ, 0, 560); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(25);
+  pwm.setPWM(TOBILLODER, 0, 430); // GIRAMOS TOBILLO DERECHO HORARIO
+  delay(100);
+  pwm.setPWM(RODILLAIZQ, 0, 380); // CONTRAEMOS LA RODILLA IZQUIERDA
+  delay(25);
+  pwm.setPWM(PIEDER, 0, 255); // ESTABILIZAMOS PIE DERECHO
+}
+
+void pasoIzq(){
+  // PASITO: ESTADO ESTABLE -> ESTADO PASO HACIA DELANTE
+  // PASO: ESTADO PASO HACIA DELANTE -> ESTADO PASO HACIA DELANTE
+  caderaLigeraIzq();
+  pwm.setPWM(TOBILLODER, 0, 265); // GIRAMOS TOBILLO DERECHO HORARIO  
+  delay(20);
+  pwm.setPWM(RODILLAIZQ, 0, 405); // CONTRAEMOS RODILLA IZQUIERDA
+  delay(20);
+  pwm.setPWM(RODILLADER, 0, 210); // ESTIRAMOS RODILLA DERECHA
+  delay(20);
+  pwm.setPWM(PELVISDER, 0, 395); // CONTRAEMOS PELVIS DERECHA
+  delay(200);
+  pwm.setPWM(TOBILLOIZQ, 0, 435); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(20);
+  pwm.setPWM(PELVISIZQ, 0, 160); // CONTRAEMOS PELVIS IZQUIERDA
+  delay(20);
+  pwm.setPWM(PIEIZQ, 0, 380); // ESTABILIZAMOS PIE IZQUIERDO
+  delay(20);
+  pwm.setPWM(PIEDER, 0, 270); // "ESTABILIZAMOS" (SACAMOS) PIE DERECHO
+  delay(20);
+}
+
+void giroDer(){
+  caderaFrente();
+  brazoGiro();
+  delay(50);
+  pwm.setPWM(PIEDER, 0, 350); // SACAMOS PIE DERECHO
+  delay(200);
+  pwm.setPWM(TOBILLOIZQ, 0, 375); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(200);
+  pwm.setPWM(PIEDER, 0, 260); // ESTABILIZAMOS EL PIE DERECHO
+  delay(200);
+  pwm.setPWM(PIEIZQ, 0, 190); // SACAMOS EL PIE IZQUIERDO
+  delay(200);
+  pwm.setPWM(TOBILLOIZQ, 0, 475); // ESTABILIZAMOS TOBILLO IZQUIERDO
+  delay(200);
+  pwm.setPWM(PIEIZQ, 0, 380); // ESTABILIAMOS EL PIE IZQUIERDO
+  delay(200);
+}
+
+void giroIzq(){
+  caderaFrente();
+  brazoGiro();
+  delay(50);
+  pwm.setPWM(PIEIZQ, 0,190); // SACAMOS PIE IZQ
+  delay(200);
+  pwm.setPWM(TOBILLODER, 0, 465); // GIRAMOS TOBILLO DERECHO ANTIHORARIO
+  delay(200);
+  pwm.setPWM(PIEIZQ, 0, 380); // ESTABILIZAMOS EL PIE IZQUIERDO
+  delay(200);
+  pwm.setPWM(PIEDER, 0, 350); // SACAMOS EL PIE DERECHO
+  delay(200);
+  pwm.setPWM(TOBILLODER, 0, 320); // ESTABILIZAMOS TOBILLO DERECHO
+  delay(200);
+  pwm.setPWM(PIEDER, 0, 260); // ESTABILIAMOS EL PIE DERECHO
+  delay(200);
+}
+void brazoGiro(){
+   pwm.setPWM(HOMBROIZQ, 0, 320); // SACAMOS BROZO IZQUIERDO
+   pwm.setPWM(HOMBRODER, 0, 325); // SACAMOS BRAZO DERECHO
+}
+
+void bloqueBasicoMov(){
+  delay(175);
+  cojeraIzqTrasPaso();
+  delay(175);
+  pasoDer();
+  delay(175);
+  cojeraDer();
+  delay(175);
+  pasoIzq();
+}
+
+void reincorporacionTrasMov(){
+  delay(200);
+  cojeraIzqTrasPaso();
+  delay(200);
+  pasitoDer();
+  delay(300);
+  erguir();
+}
+
+void erguir(){
+  caderaFrente();
+  brazosAvance();
+  pwm.setPWM(PIEDER, 0, 260);
+  delay(100);
+  pwm.setPWM(PIEIZQ, 0, 380);
+  delay(100);
+  pwm.setPWM(TOBILLODER, 0, 320);
+  delay(100);
+  pwm.setPWM(TOBILLOIZQ, 0, 475);
+  delay(100);
+  pwm.setPWM(RODILLADER, 0, 195);
+  delay(100);
+  pwm.setPWM(RODILLAIZQ, 0, 405);
+  delay(100);
+  pwm.setPWM(PELVISDER, 0, 395);
+  delay(100);
+  pwm.setPWM(PELVISIZQ, 0, 185);
+  delay(100);
+}
+
+void brazoGiroTanque(){
+   pwm.setPWM(HOMBROIZQ, 0, 250); // SACAMOS BROZO IZQUIERDO
+   pwm.setPWM(HOMBRODER, 0, 380); // SACAMOS BRAZO DERECHO
+}
+//MODO TANQUE
+ void modoTanque (){
+  
+  brazoGiroTanque();
+  delay (500);
+   pwm.setPWM(RODILLADER, 0, 325);//CONTRAEMOS RODILLA DERECHA 
+  delay(10);
+  pwm.setPWM(RODILLAIZQ, 0, 290);// CONTRAEMOS RODILLA IZQUIERDA
+  delay(10);
+  pwm.setPWM(PELVISDER, 0, 520);// CONTRAEMOS PELVIS DERECHA
+  delay(10);
+  pwm.setPWM(PELVISIZQ, 0, 95);// CONTRAEMOS PELVIS IZQUIERDA 
+  delay(500); 
+  
+ }
+ void levantar(){
+  brazoGiroTanque(); //IGUAL QEU BRAZO GIRO TANQUE PARO MAS LEVE
+  delay(300);
+  pwm.setPWM(RODILLADER, 0, 195);
+  delay(20);
+  pwm.setPWM(RODILLAIZQ, 0, 405);
+  delay(20);
+  pwm.setPWM(PELVISDER, 0, 395);
+  delay(20);
+  pwm.setPWM(PELVISIZQ, 0, 185);
+  delay(400);
+  erguir();
+  delay(300);
+ }
+
+ void bloqueBasicoMovTanque(){
+  cojeraIzqTrasPasoTanque();
+  delay(250);
+  pasoDerTanque();
+  delay(250);
+  cojeraDerTanque();
+  delay(250);
+  pasoIzqTanque();
+  delay(250);
+}
+
+void pasoDerTanque(){
+  // PASITO: ESTADO ESTABLE -> ESTADO PASO HACIA DELANTE
+  // PASO: ESTADO PASO HACIA DELANTE -> ESTADO PASO HACIA DELANTE
+  delay(50);
+  //caderaLigeraDer();
+  /*
+  pwm.setPWM(PELVISDER, 0, 395); // CONTRAEMOS PELVIS DERECHA
+  delay(25);
+  pwm.setPWM(RODILLADER, 0, 195); // CONTRAEMOS RODILLA DERECHA
+  delay(25);
+  pwm.setPWM(PELVISIZQ, 0, 185); // ?ESTIRAMOS? PELVIS IZQUIERDA
+  delay(25);
+  */
+  pwm.setPWM(TOBILLOIZQ, 0, 560); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(50);
+  pwm.setPWM(TOBILLODER, 0, 430); // GIRAMOS TOBILLO DERECHO HORARIO
+  delay(50);
+  /*
+  pwm.setPWM(RODILLAIZQ, 0, 380); // CONTRAEMOS LA RODILLA IZQUIERDA
+  delay(25);
+  */
+  pwm.setPWM(PIEDER, 0, 255); // ESTABILIZAMOS PIE DERECHO
+}
+
+void pasoIzqTanque(){
+  // PASITO: ESTADO ESTABLE -> ESTADO PASO HACIA DELANTE
+  // PASO: ESTADO PASO HACIA DELANTE -> ESTADO PASO HACIA DELANTE
+  //caderaLigeraIzq();
+  pwm.setPWM(TOBILLODER, 0, 245/*265*/); // GIRAMOS TOBILLO DERECHO HORARIO  
+  delay(50);
+  /*
+  pwm.setPWM(RODILLAIZQ, 0, 405); // CONTRAEMOS RODILLA IZQUIERDA
+  delay(20);
+  pwm.setPWM(RODILLADER, 0, 210); // ESTIRAMOS RODILLA DERECHA
+  delay(20);
+  pwm.setPWM(PELVISDER, 0, 395); // CONTRAEMOS PELVIS DERECHA
+  delay(200);
+  */
+  pwm.setPWM(TOBILLOIZQ, 0, 435); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(50);
+  /*
+  pwm.setPWM(PELVISIZQ, 0, 160); // CONTRAEMOS PELVIS IZQUIERDA
+  delay(20);
+  */
+  pwm.setPWM(PIEIZQ, 0, 380); // ESTABILIZAMOS PIE IZQUIERDO
+  delay(50);
+  pwm.setPWM(PIEDER, 0, 270); // "ESTABILIZAMOS" (SACAMOS) PIE DERECHO
+  delay(50);
+}
+
+void cojeraDerTanque(){
+  // ESTO VA DESPU?S DE PASITO DERECHO
+  delay(50);
+  /*
+  pwm.setPWM(RODILLAIZQ, 0, 440); // ESTIRAMOS LA RODILLA IZQUIERDA
+  delay(25);
+  */
+  pwm.setPWM(TOBILLODER, 0, 320); // GIRAMOS TOBILLO DERECHO HORARIO
+  delay(50);
+  pwm.setPWM(PIEIZQ, 0, 570); // METEMOS PIE IZQUIERD0
+  delay(50);
+  pwm.setPWM(TOBILLOIZQ, 0, 475); // ESTABILIZAMOS TOBILLO DERECHO
+  delay(50);
+  pwm.setPWM(PIEDER, 0, 280); // "ESTABILIZAMOS" PIE DERECHO
+  delay(50);
+  /*
+  pwm.setPWM(PELVISIZQ, 0, 220); // ESTIRAMOS LA PELVIS IZQUIERDA
+  delay(25);
+  pwm.setPWM(PELVISDER, 0, 380); // CONTRAEMOS LA PELVIS DERECHA
+  delay(25);
+  pwm.setPWM(RODILLADER, 0, 175); // CONTRAEMOS LA RODILLA DERECHA
+  */
+}
+
+void cojeraIzqTrasPasoTanque(){
+  /*
+  pwm.setPWM(RODILLADER, 0, 140); // ESTIRAMOS LA RODILLA DERECHA
+  delay(25);
+  */
+  //pwm.setPWM(RODILLAIZQ, 0, 140); // CONTRAEMOS LA PELVIS IZQUIERDA
+  delay(50);
+  pwm.setPWM(PIEDER, 0, 120); // METEMOS PIE DERECHO
+  delay(50);
+  pwm.setPWM(PIEIZQ, 0, 365); // SACAMOS PIE IZQUIERDO
+  delay(50);
+}
+
+void pasitoDerTanque(){
+  // PASITO: ESTADO ESTABLE -> ESTADO PASO HACIA DELANTE
+  // PASO: ESTADO PASO HACIA DELANTE -> ESTADO PASO HACIA DELANTE
+  delay(50);
+  /*
+  pwm.setPWM(PELVISDER, 0, 395); // CONTRAEMOS PELVIS DERECHA
+  delay(25);
+  pwm.setPWM(RODILLADER, 0, 195); // CONTRAEMOS RODILLA DERECHA
+  delay(25);
+  pwm.setPWM(PELVISIZQ, 0, 185); // ?ESTIRAMOS? PELVIS IZQUIERDA
+  delay(25);
+  */
+  pwm.setPWM(TOBILLOIZQ, 0, 550); // GIRAMOS TOBILLO IZQUIERDO ANTIHORARIO
+  delay(50);
+  pwm.setPWM(TOBILLODER, 0, 395); // GIRAMOS TOBILLO DERECHO HORARIO
+  delay(50);
+  pwm.setPWM(PIEDER, 0, 255); // ESTABILIZAMOS PIE DERECHO
+  delay(50);
+}
+
+void reincorporacionTrasMovTanque(){
+  delay(200);
+  cojeraIzqTrasPasoTanque();
+  delay(200);
+  pasitoDerTanque();
+  delay(200);
+  // CORREGIMOS LOS TOBILLOS:
+   pwm.setPWM(TOBILLODER, 0, 320);
+  delay(20);
+  pwm.setPWM(TOBILLOIZQ, 0, 475);
+  delay(20);
+}
+
+void obtenerDistancia() {
+  digitalWrite(outputUltrasonido, LOW);
+  delayMicroseconds(2);
+  digitalWrite(outputUltrasonido, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(outputUltrasonido, LOW);
+  distanciaUltrasonido = (pulseIn(inputUltrasonido, HIGH)) / 58;
+}
+
+///////////////////////////////////////////////////////////////////////
+                      // MÁQUINA DE ESTADOS \\
+///////////////////////////////////////////////////////////////////////
+
+// DISTANCIAS
+#define CUERPOACUERPO 0
+#define CERCA 13
+#define MEDIO 45
+#define LEJOS 70
+int distancia;
+
+void calcularDistancia(){
+  obtenerDistancia();
+  if(distancia <= CERCA) distancia = CUERPOACUERPO;
+  else if(distancia <= MEDIO) distancia = CERCA;
+  else if(distancia <= LEJOS) distancia = MEDIO;
+  else distancia = LEJOS;
+}
+
+// ESTADOS
+#define CENTRO 0
+#define CENTRODERECHA 1
+#define DERECHA 2
+#define CENTROIZQUIERDA 3
+#define IZQUIERDA 4
+int estado = CENTRO;
+
+// POSICIONES DETECTADAS DEL CONTRINCANTE
+/*
+#define CENTRO 0
+#define CENTRODERECHA 1
+#define DERECHA 2
+#define CENTROIZQUIERDA 3     TODO ESTO LO HEMOS DEFINIDO ANTES
+#define IZQUIERDA 4
+*/
+
+// Estas son posiciones especiales: desconocida pero tras empezar el rastreo y desconocida pero al terminar el rastreo
+#define DESCONOCIDA 5
+#define DESCONOCIDAFIN 6
+int posicion = DESCONOCIDA;
+
+// VARIABLE PARA SABER HACIA DONDE HAY QUE 
+int torcer = DERECHA;
+
+// MODO LIGERO O TANQUE
+#define LIGERO 0
+#define TANQUE 1
+int modo = LIGERO;
+
+void loop(){
+  maquinaEstados(); // POR MOTIVOS DE DEPURACIÓN, SE DECIDE IMPLEMENTAR CADA PALMO DE CÓDIGO ITERATIVO ENCAPSULADO EN UN PROCEDIMIENTO ALEJADO DE LOOP
+}
+
+void maquinaEstados(){
+  // MEDIMOS LA DISTANCIA Y GUARDAMOS LO QUE VALE 
+  calcularDistancia();
+
+  // SI VEMOS AL CONTRINCANTE EN EL ESTADO ACTUAL, ENTONCES LA POSICIÓN DEL CONTRINCANTE PASA A SER EL ESTADO
+  if(distancia != LEJOS){
+    posicion = estado;
+  } // EN CASO CONTRARIO, LA POSICIÓN PERMANECERÁ EN "DESCONOCIDA" O EN "DECONOCIDAFIN"
+  
+  // SELECCIÓN DEL ESTADO
+  if(estado == CENTRO) estadoCentro();
+//  else if(estado == CENTRODERECHA) estadoCentroDerecha();
+  else if(estado == DERECHA) estadoDerecha();
+  //else if(estado == CENTROIZQUIERDA) estadoCentroIzquierda();
+  else if(estado == IZQUIERDA) estadoIzquierda();
+}
+
+void estadoCentro(){
+  // A PARTIR DE LA POSICIÓN ACTUAMOS EN CONSECUENCIA
+  if(posicion == DESCONOCIDA){
+  // PREGUNTAMOS HACIA DONDE HABRÍA QUE GIRAR PARA LA BÚSQUEDA, YA QUE DESCONOCEMOS LA POSICIÓN DEL CONTRINCANTE
+    if(torcer == DERECHA){
+      torcerDer();
+      estado = DERECHA;
+    }
+    if(torcer == IZQUIERDA){
+      torcerIzq();
+      estado = IZQUIERDA;
+    }
+  }
+  else if(posicion == DESCONOCIDAFIN){
+    // BASICAMENTE GIRAMOS A LA IZQUIERDA Y REPETIMOS TODO EL PROCESO DESDE EL CENTRO
+      giroIzq();
+      torcer = DERECHA;
+      posicion = DESCONOCIDA;
+      estado = CENTRO;   
+  }
+  else if(posicion == CUERPOACUERPO){
+      // NADA POR AHORA
+      estado = CENTRO;
+  }
+  else if(posicion == CERCA){
+      modoTanque();
+      delay(100);
+      modo = TANQUE;
+      // FALTARÍA QUE ANDASE HACIA DELANTE, PERO ANTES HAY QUE REALIZAR PRUEBAS PARCIALES A LA MÁQUINA DE ESTADOS
+      estado = CENTRO;
+  }
+  else if(posicion == MEDIO){
+      modo = LIGERO;
+      levantar();
+      bloqueBasicoMov;
+      delay(300);
+      bloqueBasicoMov();
+      delay(300);
+      reincorporacionTrasMov();
+      estado = CENTRO;
+  }
+  
+}
+
+void estadoDerecha(){
+   if(posicion == DERECHA){
+      posicion = DESCONOCIDA; // OLVIDAMOS LA POSICIÓN (PARA QUE DESDE EL ESTADO CENTRO NO SE VUELVA A GIRAR A LA DERECHA PORQUE SÍ)
+      estado = CENTRO;
+      torcerCentro();
+      giroDer();   
+   }
+   else{
+      estado = CENTRO;
+      torcerCentro();
+      torcer = IZQUIERDA;
+      posicion = DESCONOCIDA; // NO CREO QUE SE ACTUALICE DESDE EL VALOR "DESCONOCIDA", PERO LO PONGO POR SI ACASO
+   }
+}
+
+void estadoIzquierda(){
+   if(posicion == IZQUIERDA){
+      posicion = DESCONOCIDA; // OLVIDAMOS LA POSICIÓN (PARA QUE DESDE EL ESTADO CENTRO NO SE VUELVA A GIRAR A LA DERECHA PORQUE SÍ)
+      estado = CENTRO;
+      torcerCentro();
+      giroIzq();   
+      torcer = DERECHA;
+   }
+   else{
+      estado = CENTRO;
+      torcerCentro();
+      torcer = DERECHA;
+      posicion = DESCONOCIDAFIN; // LO INDICAMOS PARA QUE DEJE DE BUSCAR Y GIRE HACIA LA IZQUIERDA
+   }
+}
+
+void torcerCentro(){
+  caderaFrente();
+}
+
+void torcerIzq(){
+  pwm.setPWM(HOMBROIZQ, 0, 450 );
+}
+
+void torcerDer(){
+  pwm.setPWM(CADERA, 0, 310);
+}
